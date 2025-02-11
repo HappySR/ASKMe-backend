@@ -26,7 +26,7 @@ async def process_text_api(
 
 @app.post("/api/translate_response")
 async def translate_response_api(text: str, target_language: str):
-    response = await translate_response(text, target_language)
+    response = translate_response(text, target_language)
     return {"response": response}
 
 @app.post("/api/process_document")
