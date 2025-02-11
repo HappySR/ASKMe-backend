@@ -77,7 +77,7 @@ POST /api/process_text
 
 #### 📌 Process Document (PDF, DOCX, TXT)
 
-````bash
+```bash
 POST /api/process_document
 ```
 
@@ -101,7 +101,7 @@ curl -X 'POST' 'http://127.0.0.1:8000/api/process_document' \
     }
 ```
 
-🎙 Process Audio (MP3, WAV, FLAC)
+## 🎙 Process Audio (MP3, WAV, FLAC)
 
 ```bash
 POST /api/process_audio
@@ -126,7 +126,7 @@ curl -X 'POST' 'http://127.0.0.1:8000/api/process_audio' \
     }
 ```
 
-🎥 Process Video (MP4, MOV, AVI)
+## 🎥 Process Video (MP4, MOV, AVI)
 
 ```bash
 POST /api/process_video
