@@ -195,4 +195,4 @@ This project is licensed under the MIT License.
 ## 🛠 Developed By
 
 💡 Subhajit Roy
-🚀 Connect with me: [GitHub](https://github.com/YOUR_GITHUB_USERNAME) | [LinkedIn](https://www.linkedin.com/in/YOUR_LINKEDIN_USERNAME)
+🚀 Connect with me: [GitHub](https://github.com/HappySR) | [LinkedIn](www.linkedin.com/in/subhajit-roy-dev)
