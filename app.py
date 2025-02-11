@@ -36,7 +36,16 @@ async def process_document_api(
     target_language: str = Form("en")
 ):
     response = await process_document(file, prompt)
-    return {"response": process_and_translate(response["response"], target_language)}
+
+    print(f"🔍 Debug: Response from process_document -> {response}")  # Debugging Log
+
+    # ✅ Check if 'response' key exists before accessing it
+    if not response or "response" not in response:
+        return {"error": f"Invalid response from document processor: {response}"}
+
+    translated_response = process_and_translate(response["response"], target_language)
+    
+    return {"response": translated_response}
 
 @app.post("/api/process_audio")
 async def process_audio_api(

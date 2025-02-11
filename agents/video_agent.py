@@ -6,6 +6,8 @@ import traceback
 import moviepy.editor as mp
 from services.whisper_service import transcribe_audio
 from services.gemini_service import process_text_with_gemini
+from utils.language_detection import detect_language
+from services.libretranslate_service import translate_text
 
 async def process_video(file, prompt: str = None):
     """
@@ -13,6 +15,7 @@ async def process_video(file, prompt: str = None):
     - Saves it temporarily
     - Extracts audio if available
     - Transcribes the audio
+    - Detects language & translates if needed
     - Sends transcription (with an optional prompt) to Gemini
     - Returns only the relevant response
     """
@@ -25,7 +28,7 @@ async def process_video(file, prompt: str = None):
     temp_audio_path = None  # Initialize audio path
 
     try:
-        # 🔹 Step 1: Save uploaded video as a temp file (efficiently)
+        # 🔹 Step 1: Save uploaded video as a temp file
         async with aiofiles.open(temp_video_path, "wb") as temp_file:
             while True:
                 chunk = await file.read(1024 * 1024)  # ✅ Read in 1MB chunks
@@ -51,12 +54,12 @@ async def process_video(file, prompt: str = None):
             try:
                 video.audio.reader.close_proc()
             except Exception as e:
-                print(f"Warning: Failed to close audio reader properly: {e}")
+                print(f"⚠️ Warning: Failed to close audio reader properly: {e}")
         video.close()
 
         print(f"✅ Audio extracted at: {temp_audio_path}")  # Debugging Log
 
-        # 🔹 Step 3: Transcribe audio (Ensure passing bytes if required)
+        # 🔹 Step 3: Transcribe audio
         async with aiofiles.open(temp_audio_path, "rb") as audio_file:
             audio_data = await audio_file.read()  # ✅ Read file as bytes
 
@@ -65,10 +68,29 @@ async def process_video(file, prompt: str = None):
         if not transcription.get("text") or not transcription["text"].strip():
             return {"error": "No speech detected in the video."}
 
-        print(f"✅ Transcription received: {transcription['text'][:100]}...")  # Debugging Log
+        transcribed_text = transcription["text"]
+        print(f"✅ Transcription received: {transcribed_text[:100]}...")  # Debugging Log
 
-        # 🔹 Step 4: Process transcription with Gemini
-        if prompt and prompt.strip():  # ✅ Ensures prompt is non-empty and not just whitespace
+        # 🔹 Step 4: Detect language of transcription
+        detected_lang = detect_language(transcribed_text)
+        print(f"🌍 Detected Transcription Language: {detected_lang}")  # Debugging Log
+
+        # 🔹 Step 5: Translate transcription if needed
+        if detected_lang.lower() != "en":
+            print("🔄 Translating transcription to English...")  # Debugging Log
+            transcribed_text = translate_text(transcribed_text, detected_lang, "en")
+
+        # 🔹 Step 6: Translate prompt (if given)
+        if prompt and prompt.strip():
+            prompt_lang = detect_language(prompt)
+            print(f"🌍 Detected Prompt Language: {prompt_lang}")  # Debugging Log
+            
+            if prompt_lang.lower() != "en":
+                print("🔄 Translating prompt to English...")  # Debugging Log
+                prompt = translate_text(prompt, prompt_lang, "en")
+
+        # 🔹 Step 7: Prepare Gemini Prompt
+        if prompt and prompt.strip():
             final_prompt = f"""
             You are analyzing a transcribed video speech.
 
@@ -79,8 +101,8 @@ async def process_video(file, prompt: str = None):
 
             **User Request:** {prompt}
 
-            **Transcription:** 
-            {transcription["text"]}
+            **Transcription (translated to English):**
+            {transcribed_text}
 
             Respond **only** based on the transcription and user request.
             """
@@ -88,15 +110,15 @@ async def process_video(file, prompt: str = None):
             final_prompt = f"""
             The following is a transcription of a video. Extract and summarize the most relevant details.
 
-            **Transcription:** 
-            {transcription["text"]}
+            **Transcription (translated to English):**
+            {transcribed_text}
 
             Keep your response concise.
             """
 
-        print(f"✅ Final Prompt Sent to Gemini:\n{final_prompt}\n")  # Debugging Log
+        print(f"✅ Final Prompt Sent to Gemini:\n{final_prompt[:200]}...\n")  # Debugging Log
 
-
+        # 🔹 Step 8: Send to Gemini
         response = await process_text_with_gemini(final_prompt)  # ✅ Await for async call
 
         return {"response": response}

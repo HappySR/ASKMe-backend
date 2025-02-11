@@ -2,21 +2,23 @@ import fitz  # PyMuPDF for PDFs
 import io
 import docx
 from fastapi import UploadFile
-from services.gemini_service import process_text_with_gemini  # Ensure this is used
+from services.gemini_service import process_text_with_gemini
+from utils.language_detection import detect_language
+from services.libretranslate_service import translate_text
 
 async def process_document(file: UploadFile, prompt: str = None):
     """
     Processes uploaded document files (.pdf, .docx, .txt)
-    - Extracts text based on file type
-    - Sends to Gemini for processing (optional prompt)
+    - Detects the language
+    - Translates document text & prompt to English (if needed)
+    - Sends everything to Gemini for processing
     """
     
     # Read the file
     content = await file.read()
     file_ext = file.filename.split(".")[-1].lower()
     
-    # Debugging log
-    print(f"📄 Processing document: {file.filename} (Type: {file_ext})")
+    print(f"📄 Processing document: {file.filename} (Type: {file_ext})")  # Debugging Log
 
     extracted_text = ""
 
@@ -26,7 +28,7 @@ async def process_document(file: UploadFile, prompt: str = None):
             extracted_text = "\n".join([page.get_text("text") for page in doc])
 
         elif file_ext == "docx":
-            doc = docx.Document(io.BytesIO(content))  # Open .docx in memory
+            doc = docx.Document(io.BytesIO(content))  
             extracted_text = "\n".join([para.text for para in doc.paragraphs])
 
         elif file_ext == "txt":
@@ -38,9 +40,27 @@ async def process_document(file: UploadFile, prompt: str = None):
         if not extracted_text.strip():
             return {"error": "No readable text found in the document."}
 
-        print(f"✅ Extracted text: {extracted_text[:100]}...")  # Debugging Log
+        print(f"✅ Extracted text (first 100 chars): {extracted_text[:100]}...")  # Debugging Log
 
-        # 🔹 Step 2: Process with Gemini (like video & audio)
+        # 🔹 Step 2: Detect document language
+        detected_lang = detect_language(extracted_text)
+        print(f"🌍 Detected Document Language: {detected_lang}")  # Debugging Log
+
+        # 🔹 Step 3: Translate document if not English
+        if detected_lang.lower() != "en":
+            print("🔄 Translating document to English...")  # Debugging Log
+            extracted_text = translate_text(extracted_text, detected_lang, "en")
+
+        # 🔹 Step 4: Translate prompt (if given)
+        if prompt and prompt.strip():
+            prompt_lang = detect_language(prompt)
+            print(f"🌍 Detected Prompt Language: {prompt_lang}")  # Debugging Log
+            
+            if prompt_lang.lower() != "en":
+                print("🔄 Translating prompt to English...")  # Debugging Log
+                prompt = translate_text(prompt, prompt_lang, "en")
+
+        # 🔹 Step 5: Prepare Gemini Prompt
         if prompt and prompt.strip():
             final_prompt = f"""
             You are analyzing a document.
@@ -52,7 +72,7 @@ async def process_document(file: UploadFile, prompt: str = None):
 
             **User Request:** {prompt}
 
-            **Document Content:**
+            **Document Content (translated to English):**
             {extracted_text}
 
             Respond **only** based on the document content and user request.
@@ -61,15 +81,16 @@ async def process_document(file: UploadFile, prompt: str = None):
             final_prompt = f"""
             The following is a document. Extract and summarize the most relevant details.
 
-            **Document Content:**
+            **Document Content (translated to English):**
             {extracted_text}
 
             Keep your response concise.
             """
 
-        print(f"✅ Final Prompt Sent to Gemini:\n{final_prompt}\n")  # Debugging Log
+        print(f"✅ Final Prompt Sent to Gemini:\n{final_prompt[:200]}...\n")  # Debugging Log
 
-        response = await process_text_with_gemini(final_prompt)  # Call Gemini
+        # 🔹 Step 6: Send to Gemini
+        response = await process_text_with_gemini(final_prompt)
 
         return {"response": response}
 
