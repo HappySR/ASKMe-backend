@@ -192,7 +192,7 @@ To contribute:
 ## 📜 License
 
 This project is licensed under the MIT License.
-🛠 Developed By
+## 🛠 Developed By
 
 💡 Subhajit Roy
 🚀 Connect with me: [GitHub](https://github.com/YOUR_GITHUB_USERNAME) | [LinkedIn](https://www.linkedin.com/in/YOUR_LINKEDIN_USERNAME)
