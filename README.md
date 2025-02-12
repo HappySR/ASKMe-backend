@@ -101,6 +101,44 @@ curl -X 'POST' 'http://127.0.0.1:8000/api/process_document' \
     }
 ```
 
+## 🖼 Process Image (JPG, PNG, BMP, WEBP)
+
+```bash
+POST /api/process_image
+```
+
+• Description: Analyzes an image and provides a response based on the prompt.
+• Request Example (Using cURL)
+
+```bash
+curl -X 'POST' 'http://127.0.0.1:8000/api/process_image' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'file=@image.jpg' \
+  -F 'prompt=Describe this image' \
+  -F 'source_lang=auto' \
+  -F 'target_lang=en'
+```
+
+• Request Body
+
+```bash
+{
+  "file": "<image file>",
+  "prompt": "Describe this image",
+  "source_lang": "auto",
+  "target_lang": "en"
+}
+```
+
+• Response Example
+
+```bash
+{
+  "response": "The image depicts a modern online classroom where a woman is teaching students via a laptop."
+}
+```
+
 ## 🎙 Process Audio (MP3, WAV, FLAC)
 
 ```bash
@@ -156,19 +194,29 @@ curl -X 'POST' 'http://127.0.0.1:8000/api/process_video' \
 ```bash
 askme-backend/
 │── agents/
-│   ├── audio_agent.py        # Handles audio processing
-│   ├── document_agent.py     # Handles document analysis
-│   ├── video_agent.py        # Handles video processing
+│   ├── audio_agent.py                # Handles audio processing
+│   ├── document_agent.py             # Handles document analysis
+│   ├── image_agent.py                # Handles image processing
+│   ├── response_translation_agent.py # Handles response translation
+│   ├── video_agent.py                # Handles video processing
+│
+│── models/
+│   ├── message_model.py           # Defines the structure for messages in AI-user communication
 │
 │── services/
-│   ├── gemini_service.py     # Manages communication with Gemini AI
-│   ├── whisper_service.py    # Transcribes speech using Whisper
+│   ├── gemini_service.py          # Manages communication with Gemini AI
+│   ├── whisper_service.py         # Transcribes speech using Whisper
 │   ├── libretranslate_service.py  # Handles translation
 │
+│── utils/
+│   ├── language_detection.py      # Language detection
+│
+│── .env                      # API keys & environment variables
 │── app.py                    # Main FastAPI application
-│── requirements.txt           # Python dependencies
-│── .env                       # API keys & environment variables
-│── README.md                  # This file
+│── config.py                 # Configurations
+│── LICENSE                   # License
+│── README.md                 # This file
+│── requirements.txt          # Python dependencies
 ```
 
 ## 🎯 Future Improvements
