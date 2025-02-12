@@ -17,7 +17,7 @@ This is the backend service for **ASKMe**, a powerful AI-driven conversational a
 
 ### 1️⃣ **Clone the Repository**  
 ```bash
-git clone https://github.com/HappySR/askme-backend.git
+git clone https://github.com/HappySR/ASKMe-backend.git
 cd askme-backend
 ```
 
