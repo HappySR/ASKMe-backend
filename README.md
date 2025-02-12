@@ -5,6 +5,7 @@ This is the backend service for **ASKMe**, a powerful AI-driven conversational a
 ## 🚀 Features  
 - ✅ **Text Processing**: Understands and responds to text-based queries.  
 - 📄 **Document Analysis**: Extracts and processes text from **PDF, DOCX, and TXT** files.  
+- 🖼 Image Processing: Analyzes images, extracts text if applicable, understands visual content, and generates insights using **Gemini AI**.
 - 🎙 **Audio Processing**: Transcribes and analyzes audio files using **Whisper AI**.  
 - 🎥 **Video Processing**: Extracts audio from video files, transcribes it, and processes it via **Gemini AI**.  
 - 🌍 **Translation Support**: Detects language and translates responses using **LibreTranslate**.  
@@ -16,7 +17,7 @@ This is the backend service for **ASKMe**, a powerful AI-driven conversational a
 
 ### 1️⃣ **Clone the Repository**  
 ```bash
-git clone https://github.com/YOUR_USERNAME/askme-backend.git
+git clone https://github.com/HappySR/askme-backend.git
 cd askme-backend
 ```
 
