@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, Form
 from agents.text_agent import process_text
 from agents.response_translation_agent import translate_response
 from agents.document_agent import process_document
+from agents.image_agent import process_image
 from agents.audio_agent import process_audio
 from agents.video_agent import process_video
 
@@ -13,7 +14,7 @@ def process_and_translate(response, target_language):
     Otherwise, return the original response.
     """
     if target_language.lower() != "en":
-        response = translate_response(response, target_language)  # ✅ Remove `await`
+        response = translate_response(response, target_language)
     return response
 
 @app.post("/api/process_text")
@@ -46,6 +47,20 @@ async def process_document_api(
     translated_response = process_and_translate(response["response"], target_language)
     
     return {"response": translated_response}
+
+@app.post("/process_image/")
+async def process_image_endpoint(
+    image: UploadFile = File(...), 
+    prompt: str = Form("Describe this image"), 
+    source_lang: str = Form("auto"), 
+    target_lang: str = Form("en")
+):
+    """
+    API endpoint to process images with optional multilingual prompts.
+    """
+    image_data = await image.read()
+    response = await process_image(image_data, prompt, source_lang, target_lang)
+    return response
 
 @app.post("/api/process_audio")
 async def process_audio_api(

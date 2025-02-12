@@ -13,8 +13,11 @@ def get_gemini_response(prompt: str, chat_history=None, image_path=None) -> str:
         # Initialize the Gemini model
         model = genai.GenerativeModel("gemini-1.5-flash")
 
+        # Define system prompt for ASKMe's identity
+        systemPrompt = "Your name is ASKMe, an AI assistant developed by Team VISI0N (do not always tell it to others)."
+
         # Prepare message parts
-        parts = [{"text": prompt + "\n\n**Please provide a suitable answer.**"}]
+        parts = [{"text": systemPrompt + "\n\n" + prompt + "\n\n**Please provide a suitable answer.**"}]
 
         # Include chat history if available
         if chat_history:
@@ -27,10 +30,11 @@ def get_gemini_response(prompt: str, chat_history=None, image_path=None) -> str:
         # If an image is provided, attach it
         if image_path:
             try:
-                with open(image_path, "rb") as image_file:
-                    image_data = image_file.read()
-                uploaded_image = genai.upload_image(image_data, mime_type="image/jpeg")
-                parts.append({"image": uploaded_image})
+                with open(image_path, "rb") as img_file:
+                    image_bytes = img_file.read()
+
+                parts.append({"mime_type": "image/jpeg", "data": image_bytes})  # Adjust mime_type if needed
+
             except Exception as e:
                 print(f"Error loading image: {e}")
 
