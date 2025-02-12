@@ -3,7 +3,7 @@ import asyncio
 import tempfile
 import aiofiles
 import traceback
-import moviepy.editor as mp
+from moviepy import editor
 from services.whisper_service import transcribe_audio
 from services.gemini_service import process_text_with_gemini
 from utils.language_detection import detect_language
@@ -39,7 +39,7 @@ async def process_video(file, prompt: str = None):
         print(f"✅ Video saved at: {temp_video_path}")  # Debugging Log
 
         # 🔹 Step 2: Extract audio from video
-        video = await asyncio.to_thread(mp.VideoFileClip, temp_video_path)  # ✅ Offload to separate thread
+        video = await asyncio.to_thread(editor.VideoFileClip, temp_video_path)  # ✅ Offload to separate thread
 
         if not video.audio:
             video.close()

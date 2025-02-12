@@ -5,6 +5,7 @@ from agents.document_agent import process_document
 from agents.image_agent import process_image
 from agents.audio_agent import process_audio
 from agents.video_agent import process_video
+from agents.stt_agent import process_stt
 
 app = FastAPI()
 
@@ -24,6 +25,13 @@ async def process_text_api(
 ):
     response = await process_text(text, "en")
     return {"response": process_and_translate(response, target_language)}
+
+@app.post("/api/stt")
+async def stt_api(file: UploadFile = File(...)):
+    """
+    STT Endpoint: Receives an audio file, transcribes it, and returns the text + detected language.
+    """
+    return await process_stt(file)
 
 @app.post("/api/translate_response")
 async def translate_response_api(text: str, target_language: str):
@@ -48,7 +56,7 @@ async def process_document_api(
     
     return {"response": translated_response}
 
-@app.post("/process_image/")
+@app.post("/api/process_image/")
 async def process_image_endpoint(
     image: UploadFile = File(...), 
     prompt: str = Form("Describe this image"), 
