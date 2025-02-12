@@ -2,6 +2,16 @@ from services.whisper_service import transcribe_audio
 from services.gemini_service import process_text_with_gemini
 from utils.language_detection import detect_language
 from services.libretranslate_service import translate_text
+import mimetypes
+
+SUPPORTED_AUDIO_FORMATS = {
+    "audio/mpeg",
+    "audio/wav",
+    "audio/x-wav",
+    "audio/flac",
+    "audio/ogg",
+    "audio/webm"
+}
 
 async def process_audio(file, prompt: str = None):
     """
@@ -18,6 +28,14 @@ async def process_audio(file, prompt: str = None):
         print("⚠️ Warning: No prompt received!")  # Debugging
 
     try:
+        filename = file.filename  # Get filename
+        mime_type, _ = mimetypes.guess_type(filename)  # Get MIME type
+
+        if mime_type not in SUPPORTED_AUDIO_FORMATS:
+            return {"error": f"Unsupported file format: {mime_type or 'unknown'}. Supported formats: MP3, WAV, FLAC, OGG, WEBM."}
+
+        print(f"✅ File format detected: {mime_type}")  # Debugging Log
+        
         # 🔹 Step 1: Read the audio file as bytes
         audio_content = await file.read()
 

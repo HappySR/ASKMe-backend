@@ -69,6 +69,15 @@ async def process_audio_api(
     target_language: str = Form("en")
 ):
     response = await process_audio(file, prompt)
+
+    # 🔹 Handle errors before accessing response["response"]
+    if "error" in response:
+        return {"error": response["error"]}  # Return error without crashing
+
+    if "response" not in response:
+        return {"error": "Unexpected response format from AI."}  # Handle missing response
+
+    # 🔹 Process translation safely
     return {"response": process_and_translate(response["response"], target_language)}
 
 @app.post("/api/process_video")
@@ -77,5 +86,19 @@ async def process_video_api(
     prompt: str = Form(None),
     target_language: str = Form("en")
 ):
+    # 🔍 Validate File Type
+    allowed_video_types = {"video/mp4", "video/mkv", "video/webm", "video/avi"}
+    if file.content_type not in allowed_video_types:
+        return {"error": f"Invalid file type: {file.content_type}. Please upload a video file."}
+
     response = await process_video(file, prompt)
+
+    # 🔹 Handle errors before accessing response["response"]
+    if "error" in response:
+        return {"error": response["error"]}  # Return error without crashing
+
+    if "response" not in response:
+        return {"error": "Unexpected response format from AI."}  # Handle missing response
+
+    # 🔹 Process translation safely
     return {"response": process_and_translate(response["response"], target_language)}
