@@ -10,6 +10,9 @@ from agents.stt_agent import process_stt
 app = FastAPI()
 
 def process_and_translate(response, target_language):
+    # Ensure that errors are not processed further
+    if isinstance(response, dict) and "error" in response:
+        return response  # Return the error directly
     """
     If target_language is not English, translate the response.
     Otherwise, return the original response.
@@ -26,12 +29,15 @@ async def process_text_api(
     response = await process_text(text, "en")
     return {"response": process_and_translate(response, target_language)}
 
-@app.post("/api/stt")
-async def stt_api(file: UploadFile = File(...)):
-    """
-    STT Endpoint: Receives an audio file, transcribes it, and returns the text + detected language.
-    """
-    return await process_stt(file)
+@app.post("/api/process_stt")
+async def process_stt_api(file: UploadFile = File(...)):
+    response = await process_stt(file)
+
+    # ✅ Ensure errors are returned properly
+    if isinstance(response, dict) and "error" in response:
+        return {"error": response["error"]}
+
+    return response
 
 @app.post("/api/translate_response")
 async def translate_response_api(text: str, target_language: str):
@@ -48,15 +54,18 @@ async def process_document_api(
 
     print(f"🔍 Debug: Response from process_document -> {response}")  # Debugging Log
 
-    # ✅ Check if 'response' key exists before accessing it
-    if not response or "response" not in response:
-        return {"error": f"Invalid response from document processor: {response}"}
+    # ✅ If response contains an error, return it directly
+    if isinstance(response, dict) and "error" in response:
+        return {"error": response["error"]}
+
+    if "response" not in response:
+        return {"error": "Unexpected response format from document processor."}
 
     translated_response = process_and_translate(response["response"], target_language)
     
     return {"response": translated_response}
 
-@app.post("/api/process_image/")
+@app.post("/api/process_image")
 async def process_image_endpoint(
     image: UploadFile = File(...), 
     prompt: str = Form("Describe this image"), 
@@ -78,14 +87,13 @@ async def process_audio_api(
 ):
     response = await process_audio(file, prompt)
 
-    # 🔹 Handle errors before accessing response["response"]
-    if "error" in response:
-        return {"error": response["error"]}  # Return error without crashing
+    # ✅ Ensure errors are returned properly
+    if isinstance(response, dict) and "error" in response:
+        return {"error": response["error"]}
 
     if "response" not in response:
-        return {"error": "Unexpected response format from AI."}  # Handle missing response
+        return {"error": "Unexpected response format from AI."}
 
-    # 🔹 Process translation safely
     return {"response": process_and_translate(response["response"], target_language)}
 
 @app.post("/api/process_video")
@@ -94,19 +102,17 @@ async def process_video_api(
     prompt: str = Form(None),
     target_language: str = Form("en")
 ):
-    # 🔍 Validate File Type
     allowed_video_types = {"video/mp4", "video/mkv", "video/webm", "video/avi"}
     if file.content_type not in allowed_video_types:
         return {"error": f"Invalid file type: {file.content_type}. Please upload a video file."}
 
     response = await process_video(file, prompt)
 
-    # 🔹 Handle errors before accessing response["response"]
-    if "error" in response:
-        return {"error": response["error"]}  # Return error without crashing
+    # ✅ Ensure errors are returned properly
+    if isinstance(response, dict) and "error" in response:
+        return {"error": response["error"]}
 
     if "response" not in response:
-        return {"error": "Unexpected response format from AI."}  # Handle missing response
+        return {"error": "Unexpected response format from AI."}
 
-    # 🔹 Process translation safely
     return {"response": process_and_translate(response["response"], target_language)}
