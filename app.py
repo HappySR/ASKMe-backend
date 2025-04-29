@@ -1,6 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, Form
 from agents.text_agent import process_text
-from agents.response_translation_agent import translate_response
+from agents.response_translation_agent import translate_response, translate_response_all
 from agents.document_agent import process_document
 from agents.image_agent import process_image
 from agents.audio_agent import process_audio
@@ -19,6 +19,19 @@ def process_and_translate(response, target_language):
     """
     if target_language.lower() != "en":
         response = translate_response(response, target_language)
+    return response
+
+def process_and_translate_all(response, target_language):
+    # Handle errors first
+    if isinstance(response, dict) and "error" in response:
+        return response
+    
+    # Handle different response types
+    if isinstance(response, str):
+        return translate_response_all(response, target_language)
+    elif isinstance(response, dict):
+        return {k: translate_response_all(v, target_language) if isinstance(v, str) else v 
+               for k, v in response.items()}
     return response
 
 @app.post("/api/process_text")
@@ -77,7 +90,17 @@ async def process_image_endpoint(
     """
     image_data = await image.read()
     response = await process_image(image_data, prompt, source_lang, target_lang)
-    return response
+    
+    # ✅ Error handling and translation
+    if isinstance(response, dict) and "error" in response:
+        return {"error": response["error"]}
+
+    if "response" not in response:
+        return {"error": "Unexpected response format from image processor."}
+
+    translated_response = process_and_translate(response["response"], target_lang)
+    
+    return {"response": translated_response}
 
 @app.post("/api/process_audio")
 async def process_audio_api(
@@ -115,4 +138,4 @@ async def process_video_api(
     if "response" not in response:
         return {"error": "Unexpected response format from AI."}
 
-    return {"response": process_and_translate(response["response"], target_language)}
+    return {"response": process_and_translate_all(response["response"], target_language)}
